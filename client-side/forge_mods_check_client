@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# Forge Mod Manager for Minecraft
+# Written by: sairuk && jaymou
+#
+# 2DO:
+# + Add local mod management if server removes a mod
+# 
+# V0.1:
+# + First Realese
+#
+MCURL="http://minecraft.mimic.lan/"
+MCHOME="$HOME/.minecraft"
+FORGEHOME="$MCHOME/mods/"
+FILENAME="$MCHOME/forge_mods.txt"
+
+# Download the loaded version of the hash file
+wget -q ${MCURL}forge_mods.txt -O $FILENAME
+
+# Format our output to the screen
+function formatResult {
+    echo "----"
+    echo "$NAME"
+    echo "|+ LOCAL : $LOCALHASH" 
+    echo "|+ REMOTE: $HASH"
+    echo "|+ RESULT: $RESULT"
+    echo "----"
+    echo " "
+  return
+}
+
+# Compare SHA1 of remote and local file versions
+function checkSHA1 {
+   LOCALHASH=$(sha1sum "$FORGEFILE" | awk '{print $1}')
+   if [ $LOCALHASH == $HASH ]
+   then
+     RESULT="Match"
+   else
+     RESULT="Mismatch, file removed"
+     rm "$FORGEHOME/$NAME"
+   fi
+   formatResult 
+   return
+}
+
+while read -r LINE
+    do
+
+    LOCALHASH=""
+    NAME="$(echo $LINE | awk '{for(i=2;i<=NF;++i) printf("%s ", $i)}' | sed 's/\s$//g' )"
+    HASH="$(echo $LINE | awk '{print $1}')"
+
+    FORGEFILE="$FORGEHOME$NAME"
+    
+    if [ -e "$FORGEFILE" ]
+    then
+      checkSHA1
+    else
+      RESULT="Missing, downloading"
+      formatResult
+      wget -q "$MCURL/mods/$NAME" -O "$FORGEHOME/$NAME"
+      echo "Downloaded, checking new file"
+      checkSHA1 
+    fi
+
+done < "$FILENAME"

@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# Serverside script for FMM
+# by sairuk && jaymou
+#
+# set $MCWEB to webserver docroot
+# set $MCPATH to minecraft server installation
+#
+# stick this in the startup/restart sections of the server script
+#
+# the below oneliner will build a sha1sum<space>filename text file in docroot for clients to pull 
+for x in "${MCPATH}/mods/*.jar"; do sha1sum $x | sed -e s/\\/.*\\///g > ${MCWEB}/forge_mods.txt; done;
+
